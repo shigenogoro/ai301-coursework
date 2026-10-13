@@ -66,3 +66,9 @@ The fix and the files match the plan: `api/routes/health.py` got `from sqlalchem
 - After the fix, `curl -i /health` shows `"postgres":"healthy"` and the log shows `postgres_health_check_passed`. The response is still `503` because of redis (#62), as I expected.
 - I did not diff against #82 and #96 during the build. I will do that before opening the PR in unit 4.
 - I did not change `pyproject.toml`. mypy cannot run to completion here, so I did not check which suppressions are now unnecessary.
+
+Added before opening the PR (unit 4):
+
+- I diffed against the open PRs. #82 has the same `text()` change and also rewrites the redis probe (#62), with no test. #96 has a byte-identical `health.py` hunk and a different test (`tests/unit/test_health_route.py`, a sync SQLite session). #99 and #113 are also open on #61. My PR stays as planned: the `text()` line plus `tests/unit/test_health.py`, with #62 left out.
+- I checked the `pyproject.toml` suppression that names "related #61" (`api.routes.health`: `attr-defined`, `call-overload`, `index`). Running `mypy api/routes/health.py --python-version 3.12` with that override emptied gives the same result on `main` and on my branch: `attr-defined` (redis settings, #62) and `index` errors, and no `call-overload`. No entry there is cleared by this fix, so I left `pyproject.toml` unchanged. There is no `@pytest.mark.xfail` marker for #61 (`grep -rn "issue #61:" tests` finds nothing).
+- I removed `plan.md` and `comment.md` from the branch's commit; they had been committed by mistake and are not part of the change.
