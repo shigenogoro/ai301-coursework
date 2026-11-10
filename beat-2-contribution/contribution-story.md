@@ -209,16 +209,15 @@ observable named is not a strategy.]
 
 ## Implementation Notes
 
-[A running log, added to as you work. Date each entry. What you
-built, decisions you made when you made them, wrong turns included.]
+**2026-11-09: claim, reproduction, report-back**
 
-**[Date]**
+I claimed #391 after the voice guard made me cut "and then add tests for …" from my first draft. Forked, cloned, `npm ci`, and measured the gap: the suite passed (11 suites, 54 tests) and `box-shadow-generator/page.jsx` was at 0% coverage, lines 3-202. Reading the page for the tests, I suspected two bugs: all four sliders share `id="h-offset"` with no labels, and the CSS string looked like it ended in `#00000080 ;`. I posted the report-back on the issue the same evening and asked the owner one question: fix the trailing space in this PR, or open a separate issue? The guard stopped that draft once too, because I'd written "passes (11 suites, 54 tests)" without pasting the output.
 
-[Entry]
+**2026-11-09: tests written on a local branch**
 
-**[Date]**
+On `test/box-shadow-generator-391` I wrote 10 tests in `__tests__/customizer/box-shadow-generator/page.test.jsx`, modelled on the Lorem Ipsum tests: rendering and defaults, the four sliders, color, inset on and off, both copy buttons (success, plus a rejected clipboard write that must log and not confirm), and the dark-mode toggle including a stored theme. Decisions: I mocked `sweetalert2`, since no existing test had, and selected the sliders by position because they have no labels. I wrote the default-CSS assertions as `#00000080\s*;` so they pass whichever way the owner answers about the trailing space. A throwaway probe test confirmed both suspicions (`"box-shadow: 0px 8px 24px 0px #00000080 ;"`, and four `"h-offset"` ids), and I deleted the probe afterwards. Coverage went from 0% to 96.66% (only line 53, the Tailwind copy error path, is uncovered), and the full suite passes at 12 suites and 64 tests.
 
-[Entry]
+Two wrong turns on Windows, both in the husky pre-commit hook. First, it flagged 193 files I hadn't touched: `core.autocrlf=true` had checked everything out with CRLF, and Prettier wants LF, so I set `core.autocrlf=false` in this clone and re-checked the files out. Second, its `npm run test` step failed with "'NODE_OPTIONS' is not recognized", because npm runs scripts through cmd.exe. I didn't skip the hook; I committed with `npm_config_script_shell` pointed at Git Bash, and both hook steps passed (commit `c3f5abb`, not pushed yet).
 
 **Toolkit**
 
