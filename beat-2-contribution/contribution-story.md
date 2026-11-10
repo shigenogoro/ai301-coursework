@@ -93,26 +93,26 @@ It isn't Python, which is where my profile points, but it fits the sentence of m
 
 **Problem Description**
 
-[In your own words, what is broken or missing?]
+The Box Shadow Generator page has no Jest tests. Its CSS and Tailwind outputs, its sliders, color and inset controls, both copy buttons and its dark-mode toggle could break, and CI's `npm test` would still pass, because no test ever renders the page.
 
 **Expected Behavior**
 
-[What should happen?]
+A test file at `__tests__/customizer/box-shadow-generator/` (mirroring the page's `src/app` path, as contributing.md asks) that covers what the issue's task list names: rendering, user interactions, state changes and the whole flow, and that passes locally and in CI.
 
 **Current Behavior**
 
-[What actually happens?]
+On `main` at `3b10434` there is no test for the page anywhere, and a coverage run leaves every line of `page.jsx` unexecuted: 0% across the board, lines 3-202 uncovered.
 
 **Affected Components**
 
-[Which parts of the codebase are involved?]
+`src/app/customizer/box-shadow-generator/page.jsx` (the page, all of its state, and both outputs); `src/components/Input/InputRange.jsx` (the four sliders); `src/components/navbar.jsx` (the theme toggle and `localStorage`); the `sweetalert2` and `navigator.clipboard` calls behind the copy buttons. The new test goes in `__tests__/customizer/box-shadow-generator/page.test.jsx`. No app code changes.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: my repo-memory file, `CLAUDE.local.md`, written from one scoped read of the page and the two components it imports, instead of mapping the whole repo.
+- What it produced: a 36-line map: where the state lives, what the copy buttons call, which existing tests to copy (Lorem Ipsum stubs the clipboard in `beforeEach`), and that the sliders have no labels.
+- Difficulties: the page alone didn't tell me how to select the sliders. I had to open `InputRange.jsx` to find that all four share `id="h-offset"` and have no label.
+- What changed: I recorded "select the sliders by position with `getAllByRole("slider")`" in the memory file, so later sessions start from that instead of rediscovering it.
 
 ---
 
@@ -165,29 +165,48 @@ Windows 11 Pro (10.0.26300) in Git Bash, Node v24.16.0, npm 11.18.0, Bashamega/W
 
 **Analysis**
 
-[Your analysis of the root cause: what is causing the issue, traced
-to the files and functions involved.]
+There is no runtime bug behind #391: the gap is that `src/app/customizer/box-shadow-generator/page.jsx` never got a test, while its sibling customizer pages did (Lorem Ipsum #697, Readme generator #692, Image Color Picker #696). CI runs `npm test` on every PR (`.github/workflows/jest_tests.yml`), but nothing renders this page, so a regression in it would pass CI. Reading the page for testability:
+
+- All of its state lives in one component: `shadow` (`hOffset 0, vOffset 8, blur 24, spread 0, color "#00000080", inset false`) and `isDarkMode`, both from `useState`.
+- Its two outputs, `cssShadowStyle` and `tailwindShadowStyle`, are derived from `shadow` with `useMemo` and rendered as text in two `<h3>`s. A test can read them directly.
+- Its side effects are `navigator.clipboard.writeText` (jsdom has no clipboard), `Swal.fire` from `sweetalert2` after a successful copy, `console.error` after a failed one, and `NavBar`'s `localStorage` "theme" read and write.
+- The four sliders come from `src/components/Input/InputRange.jsx`, which gives every one of them `id="h-offset"` and no label. A test can only find them by position, with `getAllByRole("slider")`.
+
+Reading the page also turned up two real bugs. A throwaway probe test (deleted afterwards) that rendered the page and printed what it found confirmed both:
+
+```
+CSS="box-shadow: 0px 8px 24px 0px #00000080 ;"
+IDS=["h-offset","h-offset","h-offset","h-offset"]
+```
+
+The stray space before `;` comes from the template literal in `cssShadowStyle` (`page.jsx`, around line 62: `${shadow.color} ${shadow.inset ? "inset" : ""};`), and the duplicate ids come from `id="h-offset"` being hardcoded in `InputRange.jsx`. On 2026-11-10 the owner answered my question on #391: "each fix in a separate pr please".
 
 **Proposed Solution**
 
-[High-level description of your fix approach, and what you are
-deliberately NOT changing.]
+Add one test file, `__tests__/customizer/box-shadow-generator/page.test.jsx`, which mirrors the `src/app` path as contributing.md asks and follows the Lorem Ipsum test's style. It mocks `sweetalert2`, stubs `navigator.clipboard` in `beforeEach`, and selects the sliders by position. The default-CSS assertions accept the string with or without the stray space (`#00000080\s*;`), so this PR passes whether or not the space fix lands first.
+
+The issue's last task, "Update the documentation to include instructions on running the tests", is already covered: contributing.md's "Run the Tests" section (added since the issue was filed) gives `npm test`, `npm test -- <folder>` for one folder, coverage, and the PowerShell form. So this PR adds no docs.
+
+Deliberately NOT changing: `page.jsx`, `InputRange.jsx`, the Jest config, `package.json`, or contributing.md. The stray space and the duplicate slider ids are real bugs, but per the owner each fix gets its own PR, so neither is fixed here.
 
 **Implementation Plan**
 
-1. [Modify file X to do Y]
-2. [Add or change Z]
-3. [Update tests]
+1. Add `__tests__/customizer/box-shadow-generator/page.test.jsx`, modelled on `__tests__/customizer/LoremIpsumGenerator/page.test.jsx`.
+2. Rendering: the heading, four sliders, an unchecked inset box, both copy buttons, and the default values in the slider labels and both outputs.
+3. Interactions: each slider updates its label and both outputs; the color picker updates the label and both outputs; inset adds `inset` to both outputs and removes it when unchecked.
+4. Copy buttons, with `navigator.clipboard` stubbed and `sweetalert2` mocked: Copy CSS and Copy TailwindCSS each write the exact output string and fire a success alert; a rejected write logs `Failed to copy text:` and shows no alert.
+5. Theme: the NavBar toggle switches the page's classes and saves `theme` to `localStorage`; a stored dark theme applies on load.
+6. Run the full suite, the coverage run and Prettier, then open the PR with `Fixes #391`. Expected results: the full suite goes from 11 suites / 54 tests to 12 suites / 64 tests, all passing; coverage of `box-shadow-generator/page.jsx` goes from 0% (lines 3-202 uncovered) to about 97% statements, with only line 53 (the Copy TailwindCSS error path) uncovered; `npm run format:check` passes.
+7. After that, take the stray space and the duplicate slider ids up separately, one fix each, as the owner asked.
 
-[Record deviations here as they happen: what changed mid-build and
-why. A recorded deviation is honest work; silent drift is not.]
+Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan existed, so the plan describes branch commit `c3f5abb` rather than coming before it. I also renamed the branch from `test/box-shadow-generator-391` to `feature/box-shadow-generator-tests` to match contributing.md's `feature/your-feature-name`.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: plan-check, run from my clone on `plan.md` and a draft plan comment in `plan-comment.md` (`claude "plan-check: grade my plan in plan.md and draft comment in plan-comment.md for issue …"`), twice.
+- What it produced: accept both times, with all six checks passing. The first run flagged three gaps that didn't change the verdict: my plan never addressed the issue's "update the documentation" task, step 6 gave no expected numbers, and I called both bugs "confirmed" without showing the probe output. The second run caught two voice slips: an unsourced "a probe render confirmed", and "I'll send … as its own PR", which promises a fix.
+- Difficulties: on the first run it reported "no voice-guide.md in any skill folder", even though `plan-check/voice-guide.md` was there as a symlink. Its file search (Glob) doesn't follow symlinks on Windows, so my voice rules were silently skipped. Its procedure also assumes a bug with a before/after and a risks section, and a test-only issue has neither, so it had to improvise.
+- What changed: I replaced the three skills' voice-guide symlinks with the one-line pointer file INSTALL.md offers as a fallback, and the second run followed it. In the plan I added the docs finding (contributing.md's "Run the Tests" section, added in #692 on 2026-11-04, already covers it), the expected before/after numbers, and the probe output. I fixed both voice slips in the comment, which I'm not posting.
 
 ---
 
