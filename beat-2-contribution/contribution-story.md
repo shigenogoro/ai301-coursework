@@ -199,7 +199,7 @@ Deliberately NOT changing: `page.jsx`, `InputRange.jsx`, the Jest config, `packa
 6. Run the full suite, the coverage run and Prettier, then open the PR with `Fixes #391`. Expected results: the full suite goes from 11 suites / 54 tests to 12 suites / 64 tests, all passing; coverage of `box-shadow-generator/page.jsx` goes from 0% (lines 3-202 uncovered) to about 97% statements, with only line 53 (the Copy TailwindCSS error path) uncovered; `npm run format:check` passes.
 7. After that, take the stray space and the duplicate slider ids up separately, one fix each, as the owner asked.
 
-Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan existed, so the plan describes branch commit `c3f5abb` rather than coming before it. I also renamed the branch from `test/box-shadow-generator-391` to `feature/box-shadow-generator-tests` to match contributing.md's `feature/your-feature-name`.
+Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan existed, so the plan describes branch commit `0ea90cb` rather than coming before it. I also renamed the branch from `test/box-shadow-generator-391` to `feature/box-shadow-generator-tests` to match contributing.md's `feature/your-feature-name`.
 
 **Toolkit**
 
@@ -214,10 +214,10 @@ Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan e
 
 This issue adds tests rather than fixing behavior, so "before and after" means the coverage run from my reproduction, re-run on the branch, plus proof that the new tests would catch a real regression. Everything ran in a fresh cmd.exe at the clone root, the same shell the ship-gate uses.
 
-1. **The reproduction, re-run.** `node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/app/customizer/box-shadow-generator/page.jsx`. On `main` (`3b10434`): `page.jsx` at 0% on every column, lines 3-202 uncovered, 11 suites / 54 tests. On the branch (`c3f5abb`): 96.66% statements, 100% branches, 93.75% functions, only line 53 uncovered, 12 suites / 64 tests.
+1. **The reproduction, re-run.** `node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/app/customizer/box-shadow-generator/page.jsx`. On `main` (`3b10434`): `page.jsx` at 0% on every column, lines 3-202 uncovered, 11 suites / 54 tests. On the branch (`0ea90cb`): 96.66% statements, 100% branches, 93.75% functions, only line 53 uncovered, 12 suites / 64 tests.
 2. **The tests decide something.** I temporarily removed `inset_` from `tailwindShadowStyle` in `page.jsx` and ran the new file. The result was `● … › checking inset adds it to both outputs, unchecking removes it`, `Tests: 1 failed, 9 passed, 10 total`. Then I restored the page with `git checkout`.
 3. **The repo's own checks**, as in my ship manifest and taken from `.github/workflows/format.yml` and `jest_tests.yml`: `npm run format:check` printed "All matched files use Prettier code style!", the full Jest suite passed 12/12 suites and 64/64 tests, and the coverage run passed the same. The husky pre-commit hook passed both of its steps when I committed.
-4. **Scope.** `git diff --stat main...HEAD` shows one file: `page.test.jsx | 194 +++`.
+4. **Scope.** `git diff --stat main...HEAD` shows one file: `page.test.jsx | 202 +++`.
 
 The 10 tests: renders the heading, the controls, and both copy buttons; starts from the default shadow; moving each slider updates its label and both outputs; picking a color updates the label and both outputs; checking inset adds it to both outputs, unchecking removes it; Copy CSS copies the CSS rule and confirms it; Copy TailwindCSS copies the Tailwind class and confirms it; a failed copy logs the error and shows no confirmation; the toggle switches to dark and back, and saves each choice; a stored dark theme is applied on load.
 
@@ -252,10 +252,21 @@ I installed the ship-gate and found the same two Windows gaps the voice guard ha
 
 plan-check accepted the plan twice. The second run is the one that actually read my voice guide, after I swapped the symlinks for pointer files. The mutation check (dropping `inset_`) failed exactly one test, as it should.
 
+**2026-11-10: a second review before opening the PR**
+
+Before opening the PR I reviewed the test file and the PR draft again, and fixed four things.
+
+- Test file: the color test only checked `toHaveTextContent("#ff0000")`, which would pass even if the color landed in the wrong place, so it now matches the whole CSS string like the other tests do.
+- Test file: the `console.error` spy was restored only when its test passed, so a failure would have leaked it into later tests. An `afterEach(jest.restoreAllMocks)` now restores it either way.
+- PR draft: the before/after block was my own condensed layout, so I swapped in the coverage table exactly as Jest prints it.
+- PR draft: "which every suite on `main` prints" claimed more than I'd checked, so it now says `main` prints the same warning.
+
+I also caught a sentence in the AI disclosure that wasn't true ("I ran every command above myself") and rewrote it to say what actually happened. The voice guard had stopped the draft once more first, under "A cause is a hypothesis until the output shows it", until I quoted `page.jsx` line 62 as the evidence. I amended the commit to `0ea90cb` (202 lines, still unpushed). The mutation check still fails exactly one test, and the ship-gate passed again.
+
 **Toolkit**
 
 - Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded each session, the husky pre-commit hook, and a throwaway probe test.
-- What it produced: the 10-test file, the branch commit `c3f5abb` with the hook passing, the probe output confirming both bugs, and the running notes above.
+- What it produced: the 10-test file, the branch commit (`c3f5abb`, amended to `0ea90cb` after review) with the hook passing, the probe output confirming both bugs, and the running notes above.
 - Difficulties: on Windows the repo's own hook failed twice for reasons that had nothing to do with my change: CRLF line endings made Prettier flag 193 untouched files, and cmd.exe can't parse `NODE_OPTIONS=` in `npm test`. The course hooks had the same platform gaps.
 - What changed: I set `core.autocrlf=false` in the clone, committed with `npm_config_script_shell` pointed at Git Bash instead of skipping the hook, and recorded both fixes in `CLAUDE.local.md` so later sessions don't rediscover them.
 
