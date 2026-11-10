@@ -212,17 +212,23 @@ Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan e
 
 ## Testing Strategy
 
-[What observable checks prove the fix: your reproduction steps re-run
-against the built change (before and after), and the repo's own test
-suite or checks with the outcome shown. "Tests pass" with nothing
-observable named is not a strategy.]
+This issue adds tests rather than fixing behavior, so "before and after" means the coverage run from my reproduction, re-run on the branch, plus proof that the new tests would catch a real regression. Everything ran in a fresh cmd.exe at the clone root, the same shell the ship-gate uses.
+
+1. **The reproduction, re-run.** `node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/app/customizer/box-shadow-generator/page.jsx`. On `main` (`3b10434`): `page.jsx` at 0% on every column, lines 3-202 uncovered, 11 suites / 54 tests. On the branch (`c3f5abb`): 96.66% statements, 100% branches, 93.75% functions, only line 53 uncovered, 12 suites / 64 tests.
+2. **The tests decide something.** I temporarily removed `inset_` from `tailwindShadowStyle` in `page.jsx` and ran the new file. The result was `● … › checking inset adds it to both outputs, unchecking removes it`, `Tests: 1 failed, 9 passed, 10 total`. Then I restored the page with `git checkout`.
+3. **The repo's own checks**, as in my ship manifest and taken from `.github/workflows/format.yml` and `jest_tests.yml`: `npm run format:check` printed "All matched files use Prettier code style!", the full Jest suite passed 12/12 suites and 64/64 tests, and the coverage run passed the same. The husky pre-commit hook passed both of its steps when I committed.
+4. **Scope.** `git diff --stat main...HEAD` shows one file: `page.test.jsx | 194 +++`.
+
+The 10 tests: renders the heading, the controls, and both copy buttons; starts from the default shadow; moving each slider updates its label and both outputs; picking a color updates the label and both outputs; checking inset adds it to both outputs, unchecking removes it; Copy CSS copies the CSS rule and confirms it; Copy TailwindCSS copies the Tailwind class and confirms it; a failed copy logs the error and shows no confirmation; the toggle switches to dark and back, and saves each choice; a stored dark theme is applied on load.
+
+Not covered: line 53, the Copy TailwindCSS failure path, whose twin for Copy CSS is tested; the preview box's inline `boxShadow` style, because jsdom's CSS parsing isn't a faithful check of it; and the page in a real browser.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: the ship manifest's three checks, run by hand in a fresh cmd.exe, plus a one-line mutation of `page.jsx` to test the tests. The evidence is collected in `test_evidence.md`.
+- What it produced: before and after coverage (0% to 96.66%), suite counts (54 to 64 tests), a failing run under the mutation, and all three manifest checks passing.
+- Difficulties: on a test-only issue there's no failing test to show "before", because coverage measures an absence. And `npm test`, the command CI uses, can't run in cmd.exe at all.
+- What changed: I added the mutation check, so the evidence shows the tests catch a regression rather than just executing lines. In the manifest I wrote the Jest rows as `node --experimental-vm-modules node_modules/jest/bin/jest.js`, which is what `npm test` runs, in a form cmd.exe accepts, and said so in each row's Source.
 
 ---
 
@@ -238,12 +244,20 @@ On `test/box-shadow-generator-391` I wrote 10 tests in `__tests__/customizer/box
 
 Two wrong turns on Windows, both in the husky pre-commit hook. First, it flagged 193 files I hadn't touched: `core.autocrlf=true` had checked everything out with CRLF, and Prettier wants LF, so I set `core.autocrlf=false` in this clone and re-checked the files out. Second, its `npm run test` step failed with "'NODE_OPTIONS' is not recognized", because npm runs scripts through cmd.exe. I didn't skip the hook; I committed with `npm_config_script_shell` pointed at Git Bash, and both hook steps passed (commit `c3f5abb`, not pushed yet).
 
+**2026-11-10: owner's answer, ship-gate, plan, evidence**
+
+The owner answered on #391: "Feel free to open prs but each fix in a separate pr please." So this PR stays test-only, and the stray space and the duplicate slider ids each get their own later. I renamed the branch to `feature/box-shadow-generator-tests`, to match contributing.md's `feature/your-feature-name`.
+
+I installed the ship-gate and found the same two Windows gaps the voice guard had. The hook matched only `Bash`, and the pr-precheck call used a bare `claude`, which can't find npm's `claude.cmd`. I patched both and confirmed a PowerShell payload is now stopped. Writing the manifest showed that the gate runs checks through cmd.exe, so `npm test` (Unix `NODE_OPTIONS=`) can't be a row, and that Prettier checks my untracked working files too: the template `ship-manifest.md` itself failed `format:check`. Its `.git/info/exclude` entry hides it from git, not from Prettier. I now run `prettier --write` on every working file I make.
+
+plan-check accepted the plan twice. The second run is the one that actually read my voice guide, after I swapped the symlinks for pointer files. The mutation check (dropping `inset_`) failed exactly one test, as it should.
+
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded each session, the husky pre-commit hook, and a throwaway probe test.
+- What it produced: the 10-test file, the branch commit `c3f5abb` with the hook passing, the probe output confirming both bugs, and the running notes above.
+- Difficulties: on Windows the repo's own hook failed twice for reasons that had nothing to do with my change: CRLF line endings made Prettier flag 193 untouched files, and cmd.exe can't parse `NODE_OPTIONS=` in `npm test`. The course hooks had the same platform gaps.
+- What changed: I set `core.autocrlf=false` in the clone, committed with `npm_config_script_shell` pointed at Git Bash instead of skipping the hook, and recorded both fixes in `CLAUDE.local.md` so later sessions don't rediscover them.
 
 ---
 
