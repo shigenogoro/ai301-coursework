@@ -66,10 +66,9 @@ I merged my three voice-guide copies into one canonical guide, added five Upstre
 
 My manifest lists the repo's own CI checks (`npm run format:check`, Jest, and Jest with coverage, from `.github/workflows/`), and the ship-gate ran them plus my pr-precheck on `feature/box-shadow-generator-tests` three times, passing all three checks and all six pr-precheck checks each time. What fought me was Windows: the gate ran commands through cmd.exe, so CI's `npm test` (Unix `NODE_OPTIONS=`) had to become `node --experimental-vm-modules node_modules/jest/bin/jest.js`; its hook matched only `Bash` and called a bare `claude` that can't find npm's `claude.cmd` (last week's voice-guard bugs again); the voice guard crashed reading Jest's `●` as cp1252; and Prettier checked my untracked working files, so the template `ship-manifest.md` itself failed `format:check`. I patched all three scripts, formatted every working file, and swapped my voice-guide symlinks for pointer files after plan-check's Glob silently skipped them. The gate's pr-precheck notes caught a ticked "no new warnings" box with no evidence, and my own second review caught a false line in my AI disclosure ("I ran every command above myself"), and I fixed both before PR #701 opened.
 
-**Unit 8: [one line on the tool work]**
+**Unit 8: Wrote a four-rule-set playbook from measured response times; the PR monitor drafted a wait note, and I posted nothing**
 
-[2-4 sentences: the PR-monitor and your playbook. What it read, what it
-drafted, what you did with the draft.]
+I installed the PR monitor and wrote my playbook from the repo's own numbers: four recent merged outside PRs (#581, #692, #696, #697) got the owner's first touch within 0.0-0.7 days while #626-#628 have sat since April, so my nudge threshold is 7 quiet days and bot comments don't count as activity. The monitor first crashed on Windows by decoding `gh`'s output as cp1252 (it died on the `●` in my PR description), so I patched its subprocess calls to UTF-8 and to find `claude.cmd`, like the other two hooks. Even then, `--state` labelled PR #701 "FEEDBACK-IN" when the only feedback came from the Vercel and CodeRabbit bots, but the full run read my bot rule and drafted a wait note: don't answer CodeRabbit's "Trivial" nitpick, and consider a nudge only after 2026-11-17. I agreed and posted nothing, since that nitpick (assert the preview's `boxShadow`) is already disclosed under "Not covered" in my PR description.
 
 ---
 
@@ -262,6 +261,10 @@ Before opening the PR I reviewed the test file and the PR draft again, and fixed
 
 I also caught a sentence in the AI disclosure that wasn't true ("I ran every command above myself") and rewrote it to say what actually happened. The voice guard had stopped the draft once more first, under "A cause is a hypothesis until the output shows it", until I quoted `page.jsx` line 62 as the evidence. I amended the commit to `0ea90cb` (202 lines, still unpushed). The mutation check still fails exactly one test, and the ship-gate passed again.
 
+**2026-11-10: PR opened, monitor installed**
+
+I opened PR #701 through Claude Code. The ship-gate reused its 10:48 PASS, and CI passed prettier and test; Vercel's "Authorization required to deploy" also shows on the merged #696. I installed the PR monitor, patched its Windows encoding bug, and wrote the playbook from measured owner response times. CodeRabbit left one "Trivial" nitpick. The monitor drafted a wait note, and I posted nothing: no human maintainer has replied yet, and my nudge threshold is 2026-11-17.
+
 **Toolkit**
 
 - Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded each session, the husky pre-commit hook, and a throwaway probe test.
@@ -288,7 +291,8 @@ It answers every item of the repo's PR template. Both "Type of change" boxes are
 
 **Maintainer Feedback:**
 
-- 2026-11-10: none yet on the PR. On the issue, before I opened it, the owner wrote "Feel free to open prs but each fix in a separate pr please", which is why this PR is test-only.
+- 2026-11-10: none yet from the owner on the PR. On the issue, before I opened it, the owner wrote "Feel free to open prs but each fix in a separate pr please", which is why this PR is test-only. On the PR, the CodeRabbit bot left one review comment, labelled "Trivial": assert the preview box's `boxShadow` style after the interactions.
+- 2026-11-10: I didn't reply to the bot or change the branch. The preview's inline style is already listed under "Not covered" in my description, and my playbook says bot reviews aren't a round to answer. If the owner asks for it, I'll add the assertion and reply with the commit and the test output.
 
 **Status:** Awaiting review
 
@@ -305,25 +309,33 @@ It answers every item of the repo's PR template. Both "Type of change" boxes are
 
 **Technical Skills Gained**
 
-[What you learned technically, named concretely.]
+- **React Testing Library on a page with no labels.** I selected the sliders with `getAllByRole("slider")` by position, read derived output straight from the rendered text, and asserted that output with a regex (`#00000080\s*;`), so the test holds with or without a pending bug fix.
+- **Mocking a side-effecting library and a missing browser API in Jest.** I mocked `sweetalert2` with an `__esModule` factory and stubbed `navigator.clipboard` with a resolving `jest.fn()` (and a rejecting one for the failure path). Restoring spies in `afterEach` keeps a failing test from leaking its `console.error` spy into the next one.
+- **A mutation check as the evidence for a test-only change.** Coverage shows the lines ran. Deleting `inset_` from `page.jsx` and watching exactly one test fail shows the tests decide something.
+- **Windows-specific tooling failures.** Python's `subprocess` can't find `claude.cmd` by its bare name, `text=True` decodes as cp1252 unless you pass `encoding="utf-8"`, npm runs scripts through cmd.exe (so `NODE_OPTIONS=x jest` fails), `core.autocrlf=true` makes Prettier flag every file, and ripgrep-based Glob doesn't follow symlinks.
+- **Reading a repo's real conventions** from `.github/workflows/`, the PR template and contributing.md (for example, `feature/<name>` branches and tests mirroring `src/app`), instead of guessing.
 
 **Challenges Overcome**
 
-[What was hard and how you solved it; point at the real events, the
-Toolkit blocks above are full of them.]
+- **Finding an issue that wasn't taken.** My scan and two dozen site picks hit open PRs or recent claims (see Why I Chose This Issue). I solved it with a free `gh` pre-check for linked PRs and claim comments before paying to grade. GitHub's `-linked:pr` qualifier would have done most of that filtering in the search itself.
+- **The course hooks didn't run on Windows.** The voice guard, the ship-gate and the PR monitor all had the same `claude.cmd` lookup bug, and the hooks matched only the `Bash` tool, not PowerShell. Two of them also crashed on UTF-8 text. Each time I found it by watching a real run fail (a post that skipped the guard, a "claude not on PATH" stop, a cp1252 traceback), patched the smallest line that fixed it, and confirmed the fix with a piped test payload.
+- **The repo's own pre-commit hook failed for reasons unrelated to my change** (193 CRLF files; `NODE_OPTIONS` in cmd.exe). I fixed the clone's line endings and pointed npm's script shell at Git Bash rather than skipping the hook.
+- **My own words overreaching.** The voice guard stopped me four times: a claim that promised the fix, a report-back missing its output, a PR draft naming a cause without evidence, and (caught in my own review) an AI disclosure saying I'd run commands Claude Code ran. Each stop pointed at a real problem, so I fixed the text every time instead of the rule.
 
 **What I'd Do Differently Next Time**
 
-[Reflection on your process.]
+- **Check claim signals before anything else.** I'd put `-linked:pr` into my scout's queries on day one, and treat an issue-body offer ("I can open a PR") or a bot "is-working" label as a claim. Most of my unit-5 and unit-6 time went into issues that were already taken.
+- **Plan before building.** I wrote the tests in unit 6, before the plan existed, and had to record that as a deviation. On a real bug I'd write `plan.md` and get plan-check's accept first, because the plan is what keeps the PR to one fix.
+- **Run my voice rules on the PR draft before the first ship-gate run**, not after. Each revision invalidated the PASS and cost another run.
+- **Test the tooling on my platform first.** A two-minute run of each hook with a piped PowerShell payload and a UTF-8 file would have surfaced all the Windows bugs before they blocked real posts.
 
 ---
 
 ## Resources Used
 
-[What actually helped, not a reading list. List things this story
-already shows you using: the doc you followed to set the environment
-up, the thread that explained the bug, the person who answered you.
-One real entry beats ten plausible ones.]
-
-- [Link to documentation that helped]
-- [Discussion, issue, or post that helped]
+- WebDevTools `contributing.md`, especially the "Run the Tests" section added in #692. It gave me the test layout (`__tests__/` mirrors `src/app`), the commands, and the PowerShell form: https://github.com/Bashamega/WebDevTools/blob/main/contributing.md
+- The merged Lorem Ipsum tests (#697), the model I followed for structure, the clipboard stub and the theme tests: https://github.com/Bashamega/WebDevTools/pull/697
+- The repo's CI workflows, which my ship manifest is built from: `.github/workflows/format.yml` and `.github/workflows/jest_tests.yml`
+- The owner's answer on #391, which set this PR's scope: https://github.com/Bashamega/WebDevTools/issues/391
+- Testing Library's query priority guide, for choosing `getByRole` over test ids, and why unlabeled inputs leave only positional queries: https://testing-library.com/docs/queries/about/#priority
+- Jest's mock function and module-mocking docs, for `jest.mock` with an `__esModule` factory and `restoreAllMocks`: https://jestjs.io/docs/mock-functions
