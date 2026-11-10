@@ -1,4 +1,4 @@
-# Contribution: [Issue Title]
+# Contribution: Implement Jest Tests for Box shadow generator
 
 Path: `beat-2-contribution/contribution-story.md`
 
@@ -9,9 +9,8 @@ files and no evidence uploads are part of Assignment 5.
 
 **Contribution Number:** [1]
 **Student:** [Student name]
-**GitHub Username:** [your GitHub username, exactly as it appears on your profile - no @, no
-profile URL. Your comments upstream are identified by this name.]
-**Issue:** [GitHub issue link]
+**GitHub Username:** shigenogoro
+**Issue:** https://github.com/Bashamega/WebDevTools/issues/391
 **Pull Request:** [GitHub PR link, once opened]
 
 One repository, built across units 5 to 8, telling the whole story of your real
@@ -59,11 +58,9 @@ one in the week it belongs to.
 
 I turned my unit-1 issue-select skill into issue-scout, with three owner-scoped `gh search issues` queries (FastAPI/Pydantic/SQLAlchemy bugs, LLM/RAG good-first-issues), each traced to a sentence of my fit profile, ranked by good-first-issue label, then fewest comments, then recency. The first scan rejected all five: every one was a llama_index issue that already had an open PR, and low comment counts made them look untouched because duplicate PRs show up as links, not comments. I added a 2-per-repo cap to the ranking, re-pointed two rubric checks (maintainer-responds, maintainer-authored-commit) that graded `unclear` on every real repo because their evidence wasn't where the scout looked, and made no-open-claim count assignees and claim comments again now that the Path Review house rule doesn't apply. The scout also rejected all three of my Issue Selection site picks (two had open PRs, one was an umbrella issue); I checked each failing quote against the issue page and it was right, so the tool held up there, and I now check the Development box before I claim.
 
-**Unit 6: [one line on the tool work]**
+**Unit 6: Installed the voice guard with five Upstream rules, fixed two Windows gaps in it, and wrote a 36-line repo memory**
 
-[2-4 sentences: the voice-guard, the repo-memory file. What broke or
-fell short, and what changed because of it. "Nothing broke" counts when
-it is true - say how you know.]
+I merged my three voice-guide copies into one canonical guide, added five Upstream rules (claims, questions, pings) with wrong/right pairs, wired the guard as a PreToolUse hook, and wrote `CLAUDE.local.md` for WebDevTools from one scoped read of the box-shadow page and its two imports. Two things broke on Windows: the hook only matched the `Bash` tool, so a `gh issue comment` sent through Claude Code's PowerShell tool skipped the guard, and every real check failed with "the claude CLI is not on PATH" because npm installs `claude.cmd`, which a bare `subprocess.run(["claude", ...])` can't find. I widened the matcher to `Bash|PowerShell` and switched the call to `shutil.which("claude")`, then confirmed both with a piped PowerShell payload (stopped) and a manual `--draft` run (a real verdict). Once it ran, the guard stopped my first claim under my own rule "Promise the next step, never the fix" (the line "and then add tests for ..."), a draft repro-check had already passed; I cut the promise, and the hook logged a pass when I posted.
 
 **Unit 7: [one line on the tool work]**
 
@@ -79,24 +76,16 @@ drafted, what you did with the draft.]
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs in your own words: how you searched, what your scan
-surfaced, what your scout's verdict said, why this issue fits your
-profile, and what you hope to learn. If your scout's verdict on it
-was reject and you chose it anyway, say so here and say why; choosing
-against your own tool silently is what loses points. Close with an
-honest read of the tool itself: where the scout fell short on a real
-wild search and what you changed or would change, or what convinced
-you it held up. **Record the link to your claim comment in this section too.**
-Not claimed yet? Write `claim pending` and today's date where the link goes,
-and add the link the moment your claim lands.]
+This issue came from the AI301 Issue Selection site, after a long search. My scout's own scan (owner-scoped queries over FastAPI/Pydantic/SQLAlchemy and LLM/RAG repos) graded five llama_index issues and rejected all five, each already carrying an open PR. Then I took picks from the site in rounds: dna#255 and two ArduPilot issues (all rejected), EdgeTX#368 (accepted, but rated ambitious: C++ firmware with an open design question, the opposite of my profile), and over a dozen more from ArduPilot, Altinn, ChurchCRM and Red-DiscordBot that a free `gh` pre-check showed were already taken by an open PR or a recent claim comment. I graded three Python issues I found myself with a `-linked:pr` search (only quart#483 passed, and it was off-site), and three WebDevTools test issues from the site. The scout accepted #391 with difficulty **straightforward**: every required check passed, with no assignee, no linked PR, and only a bot comment; the owner had merged sibling Jest-test PRs (#692, #696, #697) in the week before I graded; and the code is one file, `src/app/customizer/box-shadow-generator/page.jsx`.
+
+It isn't Python, which is where my profile points, but it fits the sentence of my profile I care most about: working inside someone else's codebase and writing the test the way the project already does. Jest, React Testing Library, CI and two model test files are already there, and it runs with `npm ci && npx jest` and no heavy environment. I want to learn this repo's testing conventions well enough that my test reads like theirs, and to find out whether writing tests surfaces real bugs: reading the page I already suspect a stray space in the CSS output and four sliders sharing one `id`. An honest read of the scout: its rubric was right every time I checked a failing quote against the issue page, but its ranking and my site picks kept walking into taken issues. Comment count can't see a linked PR, and the claim check reads only comments, not an offer in the issue body or a bot's "is-working" label. The cheapest fix turned out to be GitHub's `-linked:pr` search qualifier, which I'd add to my strategy's queries. Claim comment: https://github.com/Bashamega/WebDevTools/issues/391#issuecomment-6757338718
 
 **Toolkit**
 
-- Tool: issue-scout (your scout: your search strategy, your rubric),
-  and how you used it
-- What it produced: [the scan and its verdict on this issue, described]
-- Difficulties: [where it fell short, or "none met" if none did]
-- What changed: [what you patched or would update, or "nothing"]
+- Tool: issue-scout, run in direct mode on each batch of site picks (`claude "issue-scout: grade <urls>"`) after a free `gh` pre-check for open PRs, assignees and claim comments, plus one full scan in Unit 5.
+- What it produced: 0/5 accepted on the scan; 0/3 then 0/3 again on my first picks; accept on EdgeTX#368 (ambitious), quart#483 (moderate), and WebDevTools #391 and #385 (straightforward) and #398 (moderate). On #391 every required check passed and the note read "straightforward."
+- Difficulties: most wild good-first-issues were already taken, and the scout only found out at grading time (about $0.20 each); `maintainer-responds` graded `unclear` on WebDevTools because no issues were opened in its 30-180 day sample window; claim signals in an issue body or a bot label slipped past `no-open-claim`.
+- What changed: in Unit 6 I replaced my strict `scope-is-bounded` check with `scope-feasible` plus a difficulty note, so open edges inform instead of rejecting. Re-grading last week's picks changed the reasons but not the verdicts. I started running a free pre-check before paying to grade, and logged three more patches in `scan-notes.md`: add `-linked:pr` to the queries, read the issue body and bot labels for claims, and fall back to recent PR reviews when there are no recent issues to sample.
 
 ---
 
@@ -131,31 +120,44 @@ and add the link the moment your claim lands.]
 
 **Environment Setup**
 
-[What a stranger would need to stand this up: your operating system,
-the relevant versions (language, runtime, package manager, the project
-itself), and how you set the project up. Then the challenges you faced
-and how you solved them, or that none came up.]
+Windows 11 Pro (10.0.26300) in Git Bash, Node v24.16.0, npm 11.18.0, Bashamega/WebDevTools `main` at `3b10434` ("test: add Jest tests for Image Color Picker (#696)"). I forked the repo to `shigenogoro/WebDevTools`, cloned it, added `upstream`, and installed with `npm ci`; Jest and React Testing Library come from the repo's own `package.json`. The one Windows catch: the `npm test` script sets `NODE_OPTIONS` with Unix syntax, which works in Git Bash but not PowerShell (`contributing.md` gives the PowerShell form), so I ran Jest directly as `NODE_OPTIONS=--experimental-vm-modules npx jest`. `npm ci` warned that two packages' install scripts weren't allow-listed; the suite ran fine without them.
 
 **Steps to Reproduce**
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. `git clone https://github.com/Bashamega/WebDevTools.git && cd WebDevTools && git checkout 3b10434 && npm ci`
+2. Run the suite as-is: `NODE_OPTIONS=--experimental-vm-modules npx jest`
+3. Look for any existing test of the page: `grep -rniE "box-shadow-generator|box shadow" __tests__ src --include='*.test.*'`
+4. Measure coverage of the page, with a tested page as a control: `NODE_OPTIONS=--experimental-vm-modules npx jest --coverage --collectCoverageFrom='src/app/customizer/LoremIpsumGenerator/page.jsx' --collectCoverageFrom='src/app/customizer/box-shadow-generator/page.jsx'`
+5. Observed: the suite passes (11 suites, 54 tests), grep finds nothing (exit 1), and `box-shadow-generator/page.jsx` is 0% covered on every column with lines 3-202 unexecuted, while the control page is at 96%.
 
 **Reproduction Evidence**
 
-- **Commit showing reproduction:** [link to commit in your fork]
-- **Screenshots/logs:** [if applicable]
-- **My findings:** [what you discovered during reproduction; an
-  honest, evidenced cannot-reproduce that led you to re-pick or ask
-  the maintainer belongs here and costs you nothing]
+- **Commit showing reproduction:** none (the reproduction is a coverage measurement on upstream `3b10434`; nothing to commit yet)
+- **Screenshots/logs:**
+
+  ```
+  Test Suites: 11 passed, 11 total
+  Tests:       54 passed, 54 total
+
+  $ grep -rniE "box-shadow-generator|box shadow" __tests__ src --include='*.test.*'; echo "exit=$?"
+  exit=1
+  $ ls __tests__/customizer
+  LoremIpsumGenerator  Readme-generator
+
+  File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+   LoremIpsumGenerator  |   96.15 |      100 |     100 |      96 |
+    page.jsx            |   96.15 |      100 |     100 |      96 | 18
+   box-shadow-generator |       0 |        0 |       0 |       0 |
+    page.jsx            |       0 |        0 |       0 |       0 | 3-202
+  ```
+- **My findings:** the issue's claim holds on today's `main`: nothing tests the page. Reading the code for the test, I found two things I've only read, not yet confirmed with a test: `InputRange` hardcodes `id="h-offset"` and `name="h-offset"` on all four sliders and none has a label, so a test can only select them by position (`getAllByRole("slider")`); and with inset off, `cssShadowStyle` builds `... #00000080 ;` with a space before the semicolon. Tests will either confirm these or show I misread them; fixing app code is out of this issue's scope unless the owner agrees.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: repro-check, run on the claim draft alone (`claude "repro-check: grade my draft claim comment in claim-draft.md for issue ..."`), then on the claim plus `repro-draft.md` together.
+- What it produced: accept on the claim (twice, before and after the voice-guard revision) and accept on the claim plus repro, with all required checks passing and the preferred `control-shown` check passing because of the Lorem Ipsum 96% row. It also checked my stray-space observation against the page source.
+- Difficulties: on the claim, repro-check and the voice guard disagreed: repro-check passed "and then add tests for ...", and the guard stopped it as a promised fix. On a test-only issue, "reproduce" means measuring an absence (coverage), and the rubric's checks fit that only loosely.
+- What changed: I cut the promise from the claim. On repro-check's notes, I pasted the grep exit status and the `ls` output instead of describing them, and I switched step 1 to clone upstream at `3b10434` rather than my fork, so a stranger doesn't have to trust my fork.
 
 ---
 
