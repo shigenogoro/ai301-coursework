@@ -11,7 +11,7 @@ files and no evidence uploads are part of Assignment 5.
 **Student:** Sheng-Kai Wen
 **GitHub Username:** shigenogoro
 **Issue:** https://github.com/Bashamega/WebDevTools/issues/391
-**Pull Request:** [GitHub PR link, once opened]
+**Pull Request:** https://github.com/Bashamega/WebDevTools/pull/701
 
 One repository, built across units 5 to 8, telling the whole story of your real
 contribution. Fill it as you work, not at the end — the sections below ask for evidence that
@@ -62,10 +62,9 @@ I turned my unit-1 issue-select skill into issue-scout, with three owner-scoped 
 
 I merged my three voice-guide copies into one canonical guide, added five Upstream rules (claims, questions, pings) with wrong/right pairs, wired the guard as a PreToolUse hook, and wrote `CLAUDE.local.md` for WebDevTools from one scoped read of the box-shadow page and its two imports. Two things broke on Windows: the hook only matched the `Bash` tool, so a `gh issue comment` sent through Claude Code's PowerShell tool skipped the guard, and every real check failed with "the claude CLI is not on PATH" because npm installs `claude.cmd`, which a bare `subprocess.run(["claude", ...])` can't find. I widened the matcher to `Bash|PowerShell` and switched the call to `shutil.which("claude")`, then confirmed both with a piped PowerShell payload (stopped) and a manual `--draft` run (a real verdict). Once it ran, the guard stopped my first claim under my own rule "Promise the next step, never the fix" (the line "and then add tests for ..."), a draft repro-check had already passed; I cut the promise, and the hook logged a pass when I posted.
 
-**Unit 7: [one line on the tool work]**
+**Unit 7: Installed the ship-gate with a three-check manifest; it passed my branch three times, after I fixed three Windows bugs in the guard tooling**
 
-[2-4 sentences: the ship-gate and your gate manifest. What it produced
-on your real branch, what fought you, what changed because of it.]
+My manifest lists the repo's own CI checks (`npm run format:check`, Jest, and Jest with coverage, from `.github/workflows/`). The ship-gate ran them plus my pr-precheck on `feature/box-shadow-generator-tests` and passed all six pr-precheck checks each time. Three things fought me, all Windows-specific. The gate ran manifest commands through cmd.exe, so CI's `npm test` (Unix `NODE_OPTIONS=`) couldn't be a row and became `node --experimental-vm-modules node_modules/jest/bin/jest.js`. The gate's hook matched only `Bash` and called a bare `claude` that can't find npm's `claude.cmd`, the same two bugs the voice guard had last week. And the voice guard crashed reading a PR draft containing Jest's `●` because it read files as cp1252. I patched all three, swapped my voice-guide symlinks for pointer files after plan-check's Glob silently skipped them, and learned that Prettier checks the untracked working files (`ship-manifest.md` itself failed `format:check`), so I now format every working file. Its pr-precheck advice also caught a ticked checkbox with no evidence behind it, and my second review caught a false line in my AI disclosure ("I ran every command above myself"). I fixed both before the PR opened.
 
 **Unit 8: [one line on the tool work]**
 
@@ -274,27 +273,31 @@ I also caught a sentence in the AI disclosure that wasn't true ("I ran every com
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when opened]
+**PR Link:** https://github.com/Bashamega/WebDevTools/pull/701
 
-**PR Description:** [what the PR says; much of the content above
-adapts into it]
+**PR Description:** "test: add Jest tests for Box Shadow Generator", opened 2026-11-10 from `shigenogoro:feature/box-shadow-generator-tests` (one commit, `0ea90cb`, one file: `__tests__/customizer/box-shadow-generator/page.test.jsx`, +202) into `Bashamega:main`, with `Fixes #391`. The description says what the 10 tests cover (rendering and defaults, the sliders, color, inset, both copy buttons including a failed clipboard write, and the theme toggle), and why the issue's docs task needed no change (contributing.md's "Run the Tests" section from #692). It includes:
+
+- the coverage table exactly as Jest prints it, before (0%, lines 3-202, 54 tests) and after (96.66%, line 53 uncovered, 64 tests)
+- the mutation check (dropping `inset_` fails exactly one test)
+- all three checks with their exact commands
+- what isn't covered
+- the two bugs I found and deliberately left for separate PRs, with the probe output and `page.jsx` line 62 / `InputRange.jsx` line 9 as evidence
+- an AI-use note in my own words
+
+It answers every item of the repo's PR template. Both "Type of change" boxes are left unticked with an N/A reason, since this is a test-only change. CI on the PR: prettier pass, test pass, greet and moderate pass. Vercel shows "Authorization required to deploy", the same as on the merged #696, because fork PRs need the owner's approval to deploy a preview.
 
 **Maintainer Feedback:**
 
-- [Date]: [feedback received, or "none yet"; silence is a normal
-  state and costs you nothing]
-- [Date]: [how you addressed it]
+- 2026-11-10: none yet on the PR. On the issue, before I opened it, the owner wrote "Feel free to open prs but each fix in a separate pr please", which is why this PR is test-only.
 
-**Status:** [Awaiting review / Iterating / Merged / Closed. The
-status is a fact you record, never a grade: the PR is graded as
-opened.]
+**Status:** Awaiting review
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: the ship-gate (`check_gate.py`), run by hand on the branch with `--branch --title … --body-file pr_draft.md`, and then as a PreToolUse hook when I opened the PR with `claude "run this command: gh pr create …"`. The voice guard checked the same body.
+- What it produced: three PASS runs, each with all three manifest checks ok (Prettier 3s, Jest about 25-35s, coverage about 26s) and pr-precheck accepting all six checks: diff-matches-plan, description-matches-diff, test-decisive, repo-checks-run, diff-clean and template-and-disclosure. At PR time it reused the 10:48 PASS instead of re-running, and the voice guard logged a pass.
+- Difficulties: the first PASS still came with voice notes that mattered. A ticked "no new warnings" box had no evidence behind it, the check commands were abbreviated as `jest -> …`, and the probe was cited without its output. The voice guard then stopped the revised draft under "A cause is a hypothesis until the output shows it". Each revision of `pr_draft.md` invalidated the PASS and cost another run.
+- What changed: I put the exact commands and raw output in the description, added the warnings evidence and a "Not covered" line, and quoted `page.jsx` line 62 as the cause. I also rewrote the AI disclosure so it says what Claude Code actually did. I'd now draft the description against my voice rules before the first gate run, not after it.
 
 ---
 
