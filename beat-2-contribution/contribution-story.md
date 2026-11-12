@@ -68,7 +68,7 @@ My manifest lists the repo's own CI checks (`npm run format:check`, Jest, and Je
 
 **Unit 8: Wrote a four-rule-set playbook from measured response times; the PR monitor drafted a wait note, and I posted nothing**
 
-I installed the PR monitor and wrote my playbook from the repo's own numbers: four recent merged outside PRs (#581, #692, #696, #697) got the owner's first touch within 0.0-0.7 days while #626-#628 have sat since April, so my nudge threshold is 7 quiet days and bot comments don't count as activity. The monitor first crashed on Windows by decoding `gh`'s output as cp1252 (it died on the `●` in my PR description), so I patched its subprocess calls to UTF-8 and to find `claude.cmd`, like the other two hooks. Even then, `--state` labelled PR #701 "FEEDBACK-IN" when the only feedback came from the Vercel and CodeRabbit bots, but the full run read my bot rule and drafted a wait note: don't answer CodeRabbit's "Trivial" nitpick, and consider a nudge only after 2026-11-17. I agreed and posted nothing, since that nitpick (assert the preview's `boxShadow`) is already disclosed under "Not covered" in my PR description.
+I installed the PR monitor and wrote my playbook from the repo's own numbers: four recent merged outside PRs (#581, #692, #696, #697) got the owner's first touch within 0.0-0.7 days while #626-#628 have sat since April, so my nudge threshold is 7 quiet days and bot comments don't count as activity. The monitor first crashed on Windows by decoding `gh`'s output as cp1252 (it died on the `●` in my PR description), so I patched its subprocess calls to UTF-8 and to find `claude.cmd`, like the other two hooks. Its first full run read my bot rule and drafted a wait note: don't answer CodeRabbit's "Trivial" nitpick, which `--state` had mislabelled as human "FEEDBACK-IN". I agreed and sent nothing, until the owner requested changes ("Please apply the code rabbit nit pick comment"). The second run drafted a "Done in 5b92a9f" reply with placeholders where the real output belonged; I filled them in, and the voice guard stopped it three times (no command on the break-it run, no environment, nothing said about what I hadn't covered) before it passed. The fix also showed me my own description had been wrong to say jsdom couldn't check the preview style, so I corrected it in the same round.
 
 ---
 
@@ -265,6 +265,10 @@ I also caught a sentence in the AI disclosure that wasn't true ("I ran every com
 
 I opened PR #701 through Claude Code. The ship-gate reused its 10:48 PASS, and CI passed prettier and test; Vercel's "Authorization required to deploy" also shows on the merged #696. I installed the PR monitor, patched its Windows encoding bug, and wrote the playbook from measured owner response times. CodeRabbit left one "Trivial" nitpick. The monitor drafted a wait note, and I posted nothing: no human maintainer has replied yet, and my nudge threshold is 2026-11-17.
 
+**2026-11-11: review round 1**
+
+The owner requested changes: apply CodeRabbit's nitpick, which asks for assertions on the preview's `boxShadow`. My PR description had said jsdom couldn't check that style reliably. I'd never tested that claim, and a probe showed it was wrong: jsdom reported `"0px 8px 24px 0px #00000080"`, then `"5px …"`, `"… #ff0000"`, and `"… inset"` after each interaction. I added a `previewShadow(container)` helper and five assertions in a new commit (`5b92a9f`), rather than amending the pushed one, so the owner can see exactly what changed. Dropping `inset` from the preview expression alone failed the inset test, so the new assertions decide something. The full suite stayed at 12 suites / 64 tests, and coverage stayed at 96.66%. I updated the PR description (the "Not covered" line, the corrected jsdom claim, and a note that the old break-it output ran on `0ea90cb`), then posted the reply through the voice guard after three stops.
+
 **Toolkit**
 
 - Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded each session, the husky pre-commit hook, and a throwaway probe test.
@@ -293,8 +297,10 @@ It answers every item of the repo's PR template. Both "Type of change" boxes are
 
 - 2026-11-10: none yet from the owner on the PR. On the issue, before I opened it, the owner wrote "Feel free to open prs but each fix in a separate pr please", which is why this PR is test-only. On the PR, the CodeRabbit bot left one review comment, labelled "Trivial": assert the preview box's `boxShadow` style after the interactions.
 - 2026-11-10: I didn't reply to the bot or change the branch. The preview's inline style is already listed under "Not covered" in my description, and my playbook says bot reviews aren't a round to answer. If the owner asks for it, I'll add the assertion and reply with the commit and the test output.
+- 2026-11-11: the owner submitted a "Changes requested" review: "Please apply the code rabbit nit pick comment".
+- 2026-11-11: I applied it in a new commit, `5b92a9f` ("test: assert the box shadow preview style after each interaction"). It asserts the preview's inline `boxShadow` on load, after the sliders and color change, and with inset checked and unchecked. A break-it check (dropping `inset` from the preview expression only) failed the inset test, and CI passed prettier and test. I also corrected the PR description, which had wrongly said jsdom couldn't check that style; a probe showed it reports `boxShadow` exactly. I replied on the PR with the commit, the test and Prettier output, and that I'd only run the break-it check for inset: https://github.com/Bashamega/WebDevTools/pull/701#issuecomment-6811000590. The re-request-review API returned 404 (I don't have write access), so I used the Re-request review button on the PR page.
 
-**Status:** Awaiting review
+**Status:** Awaiting review (changes applied in `5b92a9f`; waiting for the owner to re-review)
 
 **Toolkit**
 
