@@ -66,7 +66,7 @@ I merged my three voice-guide copies into one canonical guide, added five Upstre
 
 My manifest lists the repo's own CI checks (`npm run format:check`, Jest, and Jest with coverage, from `.github/workflows/`), and the ship-gate ran them plus my pr-precheck on `feature/box-shadow-generator-tests` three times, passing all three checks and all six pr-precheck checks each time. What fought me was Windows: the gate ran commands through cmd.exe, so CI's `npm test` (Unix `NODE_OPTIONS=`) had to become `node --experimental-vm-modules node_modules/jest/bin/jest.js`; its hook matched only `Bash` and called a bare `claude` that can't find npm's `claude.cmd` (last week's voice-guard bugs again); the voice guard crashed reading Jest's `●` as cp1252; and Prettier checked my untracked working files, so the template `ship-manifest.md` itself failed `format:check`. I patched all three scripts, formatted every working file, and swapped my voice-guide symlinks for pointer files after plan-check's Glob silently skipped them. The gate's pr-precheck notes caught a ticked "no new warnings" box with no evidence, and my own second review caught a false line in my AI disclosure ("I ran every command above myself"), and I fixed both before PR #701 opened.
 
-**Unit 8: Wrote a four-rule-set playbook from measured response times; the PR monitor drafted a wait note, and I posted nothing**
+**Unit 8: Wrote my playbook from measured response times; the PR monitor drafted a wait note, then a review reply I rewrote and posted**
 
 I installed the PR monitor and wrote my playbook from the repo's own numbers: four recent merged outside PRs (#581, #692, #696, #697) got the owner's first touch within 0.0-0.7 days while #626-#628 have sat since April, so my nudge threshold is 7 quiet days and bot comments don't count as activity. The monitor first crashed on Windows by decoding `gh`'s output as cp1252 (it died on the `●` in my PR description), so I patched its subprocess calls to UTF-8 and to find `claude.cmd`, like the other two hooks. Its first full run read my bot rule and drafted a wait note about CodeRabbit's "Trivial" nitpick, which `--state` had mislabelled as human "FEEDBACK-IN", and I sent nothing until the owner requested changes ("Please apply the code rabbit nit pick comment"). The second run drafted a "Done in 5b92a9f" reply with placeholders where the real output belonged; I filled them in, corrected my description's wrong claim that jsdom couldn't check the preview style, and fixed the three lines the voice guard stopped (no command on the break-it run, no environment, nothing said about what I hadn't covered) before posting.
 
@@ -199,6 +199,8 @@ Deliberately NOT changing: `page.jsx`, `InputRange.jsx`, the Jest config, `packa
 
 Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan existed, so the plan describes branch commit `0ea90cb` rather than coming before it. I also renamed the branch from `test/box-shadow-generator-391` to `feature/box-shadow-generator-tests` to match contributing.md's `feature/your-feature-name`.
 
+Deviation, recorded 2026-11-11: after the owner asked me to apply CodeRabbit's review, steps 2 and 3 also assert the preview box's inline `boxShadow` (on load, after the sliders and color change, and with inset on and off), in a second commit, `5b92a9f`. Before that I'd left the preview out of the plan on the untested assumption that jsdom couldn't check it.
+
 **Toolkit**
 
 - Tool: plan-check, run from my clone on `plan.md` and a draft plan comment in `plan-comment.md` (`claude "plan-check: grade my plan in plan.md and draft comment in plan-comment.md for issue …"`), twice.
@@ -212,14 +214,14 @@ Deviation, recorded: I wrote the tests (steps 1-5) in Unit 6, before this plan e
 
 This issue adds tests rather than fixing behavior, so "before and after" means the coverage run from my reproduction, re-run on the branch, plus proof that the new tests would catch a real regression. Everything ran in a fresh cmd.exe at the clone root, the same shell the ship-gate uses.
 
-1. **The reproduction, re-run.** `node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/app/customizer/box-shadow-generator/page.jsx`. On `main` (`3b10434`): `page.jsx` at 0% on every column, lines 3-202 uncovered, 11 suites / 54 tests. On the branch (`0ea90cb`): 96.66% statements, 100% branches, 93.75% functions, only line 53 uncovered, 12 suites / 64 tests.
-2. **The tests decide something.** I temporarily removed `inset_` from `tailwindShadowStyle` in `page.jsx` and ran the new file. The result was `● … › checking inset adds it to both outputs, unchecking removes it`, `Tests: 1 failed, 9 passed, 10 total`. Then I restored the page with `git checkout`.
+1. **The reproduction, re-run.** `node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --collectCoverageFrom=src/app/customizer/box-shadow-generator/page.jsx`. On `main` (`3b10434`): `page.jsx` at 0% on every column, lines 3-202 uncovered, 11 suites / 54 tests. On the branch (`0ea90cb`, and unchanged after the review commit `5b92a9f`): 96.66% statements, 100% branches, 93.75% functions, only line 53 uncovered, 12 suites / 64 tests.
+2. **The tests decide something.** I temporarily removed `inset_` from `tailwindShadowStyle` in `page.jsx` and ran the new file. The result, on `0ea90cb`, was `● … › checking inset adds it to both outputs, unchecking removes it`, `Tests: 1 failed, 9 passed, 10 total`. Then I restored the page with `git checkout`. After review I did the same for the new preview assertions, dropping `inset` from the preview's style expression only, and the inset test failed with `Expected: "0px 8px 24px 0px #00000080 inset"`, `Received: "0px 8px 24px 0px #00000080"`.
 3. **The repo's own checks**, as in my ship manifest and taken from `.github/workflows/format.yml` and `jest_tests.yml`: `npm run format:check` printed "All matched files use Prettier code style!", the full Jest suite passed 12/12 suites and 64/64 tests, and the coverage run passed the same. The husky pre-commit hook passed both of its steps when I committed.
-4. **Scope.** `git diff --stat main...HEAD` shows one file: `page.test.jsx | 202 +++`.
+4. **Scope.** `git diff --stat main...HEAD` shows one file across both commits: `1 file changed, 212 insertions(+)`.
 
-The 10 tests: renders the heading, the controls, and both copy buttons; starts from the default shadow; moving each slider updates its label and both outputs; picking a color updates the label and both outputs; checking inset adds it to both outputs, unchecking removes it; Copy CSS copies the CSS rule and confirms it; Copy TailwindCSS copies the Tailwind class and confirms it; a failed copy logs the error and shows no confirmation; the toggle switches to dark and back, and saves each choice; a stored dark theme is applied on load.
+The 10 tests: renders the heading, the controls, and both copy buttons; starts from the default shadow; moving each slider updates its label, both outputs, and the preview; picking a color updates the label, both outputs, and the preview; checking inset adds it to both outputs and the preview, unchecking removes it; Copy CSS copies the CSS rule and confirms it; Copy TailwindCSS copies the Tailwind class and confirms it; a failed copy logs the error and shows no confirmation; the toggle switches to dark and back, and saves each choice; a stored dark theme is applied on load.
 
-Not covered: line 53, the Copy TailwindCSS failure path, whose twin for Copy CSS is tested; the preview box's inline `boxShadow` style, because jsdom's CSS parsing isn't a faithful check of it; and the page in a real browser.
+Not covered: line 53, the Copy TailwindCSS failure path, whose twin for Copy CSS is tested; and the page in a real browser. Until review I also listed the preview box's inline `boxShadow` here, saying jsdom couldn't check it. That was wrong: jsdom reports it exactly, and `5b92a9f` asserts it.
 
 **Toolkit**
 
@@ -272,7 +274,7 @@ The owner requested changes: apply CodeRabbit's nitpick, which asks for assertio
 **Toolkit**
 
 - Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded each session, the husky pre-commit hook, and a throwaway probe test.
-- What it produced: the 10-test file, the branch commit (`c3f5abb`, amended to `0ea90cb` after review) with the hook passing, the probe output confirming both bugs, and the running notes above.
+- What it produced: the 10-test file, the branch commit (`c3f5abb`, amended to `0ea90cb` after my own review), the review-round commit `5b92a9f`, each with the hook passing, the probe outputs (the two bugs, and the preview's `boxShadow` in jsdom), and the running notes above.
 - Difficulties: on Windows the repo's own hook failed twice for reasons that had nothing to do with my change: CRLF line endings made Prettier flag 193 untouched files, and cmd.exe can't parse `NODE_OPTIONS=` in `npm test`. The course hooks had the same platform gaps.
 - What changed: I set `core.autocrlf=false` in the clone, committed with `npm_config_script_shell` pointed at Git Bash instead of skipping the hook, and recorded both fixes in `CLAUDE.local.md` so later sessions don't rediscover them.
 
@@ -282,7 +284,7 @@ The owner requested changes: apply CodeRabbit's nitpick, which asks for assertio
 
 **PR Link:** https://github.com/Bashamega/WebDevTools/pull/701
 
-**PR Description:** "test: add Jest tests for Box Shadow Generator", opened 2026-11-10 from `shigenogoro:feature/box-shadow-generator-tests` (one commit, `0ea90cb`, one file: `__tests__/customizer/box-shadow-generator/page.test.jsx`, +202) into `Bashamega:main`, with `Fixes #391`. The description says what the 10 tests cover (rendering and defaults, the sliders, color, inset, both copy buttons including a failed clipboard write, and the theme toggle), and why the issue's docs task needed no change (contributing.md's "Run the Tests" section from #692). It includes:
+**PR Description:** "test: add Jest tests for Box Shadow Generator", opened 2026-11-10 from `shigenogoro:feature/box-shadow-generator-tests` into `Bashamega:main`, with `Fixes #391`. It's one file, `__tests__/customizer/box-shadow-generator/page.test.jsx`, in two commits: `0ea90cb` (+202, the tests) and `5b92a9f` (the preview assertions from review round 1), +212 in total. The description says what the 10 tests cover (rendering and defaults, the sliders, color, inset, both copy buttons including a failed clipboard write, and the theme toggle), and why the issue's docs task needed no change (contributing.md's "Run the Tests" section from #692). It includes:
 
 - the coverage table exactly as Jest prints it, before (0%, lines 3-202, 54 tests) and after (96.66%, line 53 uncovered, 64 tests)
 - the mutation check (dropping `inset_` fails exactly one test)
@@ -290,6 +292,8 @@ The owner requested changes: apply CodeRabbit's nitpick, which asks for assertio
 - what isn't covered
 - the two bugs I found and deliberately left for separate PRs, with the probe output and `page.jsx` line 62 / `InputRange.jsx` line 9 as evidence
 - an AI-use note in my own words
+
+On 2026-11-11 I updated it after review: the interactions bullet now includes the preview, the "Not covered" line no longer lists the preview and says plainly that my jsdom claim was wrong, and the old break-it output is marked as run on `0ea90cb`.
 
 It answers every item of the repo's PR template. Both "Type of change" boxes are left unticked with an N/A reason, since this is a test-only change. CI on the PR: prettier pass, test pass, greet and moderate pass. Vercel shows "Authorization required to deploy", the same as on the merged #696, because fork PRs need the owner's approval to deploy a preview.
 
@@ -326,13 +330,14 @@ It answers every item of the repo's PR template. Both "Type of change" boxes are
 - **Finding an issue that wasn't taken.** My scan and two dozen site picks hit open PRs or recent claims (see Why I Chose This Issue). I solved it with a free `gh` pre-check for linked PRs and claim comments before paying to grade. GitHub's `-linked:pr` qualifier would have done most of that filtering in the search itself.
 - **The course hooks didn't run on Windows.** The voice guard, the ship-gate and the PR monitor all had the same `claude.cmd` lookup bug, and the hooks matched only the `Bash` tool, not PowerShell. Two of them also crashed on UTF-8 text. Each time I found it by watching a real run fail (a post that skipped the guard, a "claude not on PATH" stop, a cp1252 traceback), patched the smallest line that fixed it, and confirmed the fix with a piped test payload.
 - **The repo's own pre-commit hook failed for reasons unrelated to my change** (193 CRLF files; `NODE_OPTIONS` in cmd.exe). I fixed the clone's line endings and pointed npm's script shell at Git Bash rather than skipping the hook.
-- **My own words overreaching.** The voice guard stopped me four times: a claim that promised the fix, a report-back missing its output, a PR draft naming a cause without evidence, and (caught in my own review) an AI disclosure saying I'd run commands Claude Code ran. Each stop pointed at a real problem, so I fixed the text every time instead of the rule.
+- **My own words overreaching.** The voice guard stopped me six times: a claim that promised the fix, a report-back missing its output, a PR draft naming a cause without evidence, and three stops on my review reply (no command on the break-it run, no environment, nothing said about what I hadn't covered). My own review also caught an AI disclosure saying I'd run commands Claude Code ran. Each stop pointed at a real problem, so I fixed the text every time instead of the rule. The worst overreach the guard couldn't see was in my PR description: I'd written as fact that jsdom couldn't check the preview style, without ever testing it. Review round 1 proved it wrong.
 
 **What I'd Do Differently Next Time**
 
 - **Check claim signals before anything else.** I'd put `-linked:pr` into my scout's queries on day one, and treat an issue-body offer ("I can open a PR") or a bot "is-working" label as a claim. Most of my unit-5 and unit-6 time went into issues that were already taken.
 - **Plan before building.** I wrote the tests in unit 6, before the plan existed, and had to record that as a deviation. On a real bug I'd write `plan.md` and get plan-check's accept first, because the plan is what keeps the PR to one fix.
 - **Run my voice rules on the PR draft before the first ship-gate run**, not after. Each revision invalidated the PASS and cost another run.
+- **Test a claim before I write it down.** "jsdom isn't a faithful check of it" went into my evidence, my story and my PR as a reason to leave something untested. A five-line probe disproved it, after the owner had already asked for the work.
 - **Test the tooling on my platform first.** A two-minute run of each hook with a piped PowerShell payload and a UTF-8 file would have surfaced all the Windows bugs before they blocked real posts.
 
 ---
